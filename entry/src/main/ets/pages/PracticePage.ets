@@ -1,12 +1,17 @@
+import { AnswerStatus } from '../enums/AnswerStatus'
 import { PracticeStatus } from '../enums/PracticeStatus'
+import { getRandomQuestions, Question } from '../model/Question'
+import { promptAction } from '@kit.ArkUI'
 
 @Entry
 @Component
 struct PracticePage {
-  @State practiceStatus: PracticeStatus = PracticeStatus.Stopped
+  @State practiceStatus: PracticeStatus = PracticeStatus.Stopped // 练习状态
+  @State questions: Question[] = getRandomQuestions(10) // 题目数组
+  @State currentIndex: number = 0 // 当前题目的索引
+  @State answerStatue: AnswerStatus = AnswerStatus.Answering
 
   // 写函数的位置
-
   // 开始测试
   startPractice() {
     this.practiceStatus = PracticeStatus.Running
@@ -38,17 +43,40 @@ struct PracticePage {
 
       // 题目
       Column() {
-        Text('单词').wordStyle()
-        Text('例句').sentenceStyle()
+        Text(this.questions[this.currentIndex].word).wordStyle()
+        Text(this.questions[this.currentIndex].sentence).sentenceStyle()
       }
 
       // 选项
       Column({ space: 10 }) {
-        ForEach([1, 2, 3, 4], (option: number) => {
-          Button(option.toString()).optionButtonStyle({
+        ForEach(this.questions[this.currentIndex].options, (option: string) => {
+          Button(option).optionButtonStyle({
             bg: Color.White,
             font: Color.Black
           })
+            .enabled(this.answerStatue === AnswerStatus.Answering)// 500ms以内点击后不可点击
+            .onClick(() => {
+              // 判断练习状态
+              if (this.practiceStatus != PracticeStatus.Running) {
+                return promptAction.showToast({
+                  message: '请先点击开始测试'
+                })
+              }
+
+              // todo:判断正误
+              // todo:更新统计信息
+
+              // 切换题目
+              this.answerStatue === AnswerStatus.Answered
+              if (this.currentIndex < this.questions.length - 1) {
+                setTimeout(() => {
+                  this.currentIndex++
+                  this.answerStatue === AnswerStatus.Answering
+                }, 500)
+              } else {
+                this.stopPractice()
+              }
+            })
         })
       }
 
