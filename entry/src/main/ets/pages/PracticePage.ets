@@ -1,6 +1,31 @@
+import { PracticeStatus } from '../enums/PracticeStatus'
+
 @Entry
 @Component
 struct PracticePage {
+  @State practiceStatus: PracticeStatus = PracticeStatus.Stopped
+
+  // 写函数的位置
+
+  // 开始测试
+  startPractice() {
+    this.practiceStatus = PracticeStatus.Running
+    // todo:启动计时器
+  }
+
+  // 暂停测试
+  pausePractice() {
+    this.practiceStatus = PracticeStatus.Paused
+    // todo:停止计时器
+  }
+
+  // 停止测试
+  stopPractice() {
+    this.practiceStatus = PracticeStatus.Stopped
+    // todo:停止计时器
+    // todo:弹窗
+  }
+
   build() {
     Column() {
       // todo:统计面板
@@ -29,16 +54,32 @@ struct PracticePage {
 
       // 控制按钮
       Row({ space: 50 }) {
-        Button('停止测试').controlButtonStyle({
-          bg: Color.Transparent,
-          border: Color.Black,
-          font: Color.Black
-        })
-        Button('开始测试').controlButtonStyle({
-          bg: Color.Black,
-          border: Color.Black,
-          font: Color.White
-        })
+        Button('停止测试')
+          .controlButtonStyle({
+            bg: Color.Transparent,
+            border: this.practiceStatus === PracticeStatus.Stopped ? Color.Gray : Color.Black,
+            font: this.practiceStatus === PracticeStatus.Stopped ? Color.Gray : Color.Black
+          })
+          .enabled(this.practiceStatus !== PracticeStatus.Stopped)// 控制按钮是否可用 true可用  false不可用
+          .onClick(() => {
+            this.stopPractice()
+          })
+
+
+        Button(this.practiceStatus === PracticeStatus.Running ? '暂停测试' : '开始测试')
+          .controlButtonStyle({
+            bg: this.practiceStatus === PracticeStatus.Running ? '#555555' : Color.Black,
+            border: this.practiceStatus === PracticeStatus.Running ? '#555555' : Color.Black,
+            font: Color.White
+          })
+          .stateEffect(false)// 设置是否开启按压态显示效果。
+          .onClick(() => {
+            if (this.practiceStatus === PracticeStatus.Running) {
+              this.pausePractice()
+            } else {
+              this.startPractice()
+            }
+          })
       }
     }
     .practiceBgStyle()
