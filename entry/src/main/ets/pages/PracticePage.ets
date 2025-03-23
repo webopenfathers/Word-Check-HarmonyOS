@@ -2,6 +2,7 @@ import { AnswerStatus } from '../enums/AnswerStatus'
 import { PracticeStatus } from '../enums/PracticeStatus'
 import { getRandomQuestions, Question } from '../model/Question'
 import { promptAction } from '@kit.ArkUI'
+import { OptionStatus } from '../enums/OptionStatus'
 
 @Entry
 @Component
@@ -9,7 +10,8 @@ struct PracticePage {
   @State practiceStatus: PracticeStatus = PracticeStatus.Stopped // 练习状态
   @State questions: Question[] = getRandomQuestions(10) // 题目数组
   @State currentIndex: number = 0 // 当前题目的索引
-  @State answerStatue: AnswerStatus = AnswerStatus.Answering
+  @State answerStatus: AnswerStatus = AnswerStatus.Answering // 是否作答
+  @State selectedOption: string = '' // 用户点击的某个选项
 
   // 写函数的位置
   // 开始测试
@@ -50,34 +52,37 @@ struct PracticePage {
       // 选项
       Column({ space: 10 }) {
         ForEach(this.questions[this.currentIndex].options, (option: string) => {
-          Button(option).optionButtonStyle({
-            bg: Color.White,
-            font: Color.Black
+          OptionButton({
+            option: option,
+            answerStatus: this.answerStatus,
+            answer: this.questions[this.currentIndex].answer,
+            selectedOption: this.selectedOption
           })
-            .enabled(this.answerStatue === AnswerStatus.Answering)// 500ms以内点击后不可点击
+            .enabled(this.answerStatus === AnswerStatus.Answering)// 500ms以内点击后不可点击
             .onClick(() => {
               // 判断练习状态
-              if (this.practiceStatus != PracticeStatus.Running) {
+              if (this.practiceStatus !== PracticeStatus.Running) {
                 return promptAction.showToast({
                   message: '请先点击开始测试'
                 })
               }
 
               // todo:判断正误
+              this.selectedOption = option
               // todo:更新统计信息
 
               // 切换题目
-              this.answerStatue === AnswerStatus.Answered
+              this.answerStatus = AnswerStatus.Answered
               if (this.currentIndex < this.questions.length - 1) {
                 setTimeout(() => {
                   this.currentIndex++
-                  this.answerStatue === AnswerStatus.Answering
+                  this.answerStatus = AnswerStatus.Answering
                 }, 500)
               } else {
                 this.stopPractice()
               }
             })
-        })
+        }, (option: string) => this.questions[this.currentIndex].word + '-' + option)
       }
 
       // 控制按钮
@@ -111,6 +116,65 @@ struct PracticePage {
       }
     }
     .practiceBgStyle()
+  }
+}
+
+
+// 自定义选项Button组件样式
+@Component
+struct OptionButton {
+  option: string = '' // 选项
+  answer: string = '' // 每个题目的正确答案
+  @State optionStatus: OptionStatus = OptionStatus.Default // 定义按钮状态
+  @Prop selectedOption: string = '' // 父组件选中的数据传递给子组件判断
+  @Prop @Watch('onAnswerStatusChange') answerStatus: AnswerStatus // 按钮状态改变
+
+  // 监听按钮点击
+  // 修改按钮状态(颜色)
+  onAnswerStatusChange() {
+    if (this.option === this.answer) { // 是正确答案
+      this.optionStatus = OptionStatus.Right
+    } else {
+      // 判断是不是被选择的答案
+      if (this.option === this.selectedOption) {
+        this.optionStatus = OptionStatus.Wrong
+      } else {
+        this.optionStatus = OptionStatus.Default
+      }
+    }
+  }
+
+  // 定义不同状态按钮的颜色
+  getBgColor() {
+    switch (this.optionStatus) {
+      case OptionStatus.Right:
+        return '#1DBF7B'
+      case OptionStatus.Wrong:
+        return '#FA635F'
+      default:
+        return Color.White
+    }
+  }
+
+  build() {
+    Stack() {
+      Button(this.option).optionButtonStyle({
+        bg: this.getBgColor(),
+        font: this.optionStatus === OptionStatus.Default ? Color.Black : Color.White
+      })
+
+      if (this.optionStatus === OptionStatus.Right) {
+        Image($r('app.media.ic_right'))
+          .width(22)
+          .height(22)
+          .offset({ x: 10 })
+      } else if (this.optionStatus === OptionStatus.Wrong) {
+        Image($r('app.media.ic_wrong'))
+          .width(22)
+          .height(22)
+          .offset({ x: 10 })
+      }
+    }.alignContent(Alignment.Start)
   }
 }
 
