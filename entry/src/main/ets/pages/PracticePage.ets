@@ -8,28 +8,36 @@ import { OptionStatus } from '../enums/OptionStatus'
 @Component
 struct PracticePage {
   @State practiceStatus: PracticeStatus = PracticeStatus.Stopped // 练习状态
-  @State questions: Question[] = getRandomQuestions(10) // 题目数组
+  @State totalCount: number = 10 // 题目总数
+  @State questions: Question[] = getRandomQuestions(this.totalCount) // 题目数组
   @State currentIndex: number = 0 // 当前题目的索引
   @State answerStatus: AnswerStatus = AnswerStatus.Answering // 是否作答
   @State selectedOption: string = '' // 用户点击的某个选项
+  @State answeredCount: number = 0 // 本轮测试已作答个数
+  @State rightCount: number = 0 // 表示正确个数
+  timerController: TextTimerController = new TextTimerController(); //controller声明
+  timeUsed: number = 0 // 记录答题用时
 
   // 写函数的位置
   // 开始测试
   startPractice() {
     this.practiceStatus = PracticeStatus.Running
-    // todo:启动计时器
+    // 启动计时器
+    this.timerController.start()
   }
 
   // 暂停测试
   pausePractice() {
     this.practiceStatus = PracticeStatus.Paused
-    // todo:停止计时器
+    // 停止计时器
+    this.timerController.pause()
   }
 
   // 停止测试
   stopPractice() {
     this.practiceStatus = PracticeStatus.Stopped
-    // todo:停止计时器
+    // 停止计时器
+    this.timerController.pause()
     // todo:弹窗
   }
 
@@ -37,10 +45,67 @@ struct PracticePage {
     Column() {
       // todo:统计面板
       Column() {
-        Text('统计信息')
-        Text('统计信息')
-        Text('统计信息')
-        Text('统计信息')
+        // 准确率
+        StatItem({
+          icon: $r('app.media.ic_accuracy'),
+          name: '准确率',
+          fontColor: Color.Black
+        }) {
+          Text(this.answeredCount === 0 ? '0%' : ((this.rightCount / this.answeredCount * 100).toFixed() + '%'))
+            .width(100)
+            .textAlign(TextAlign.Center)
+        }
+
+        // 进度
+        StatItem({
+          icon: $r('app.media.ic_progress'),
+          name: '进度',
+          fontColor: Color.Black
+        }) {
+          Progress({ value: this.answeredCount, total: this.totalCount }).width(100)
+        }
+
+        // 个数
+        StatItem({
+          icon: $r('app.media.ic_count'),
+          name: '个数',
+          fontColor: Color.Black
+        }) {
+          Button(this.totalCount.toString())
+            .width(100)
+            .height(25)
+            .backgroundColor('#EBEBEB')
+            .fontColor(Color.Black)
+            .enabled(this.practiceStatus === PracticeStatus.Stopped)// 只有在停止状态才可以点击
+            .onClick(() => {
+              // 文本选择器
+              TextPickerDialog.show({
+                range: ['5', '10', '15', '20'],
+                value: this.totalCount.toString(),
+                alignment: DialogAlignment.Bottom,
+                onAccept: (result) => {
+                  this.totalCount = parseInt(result.value as string)
+                  this.questions = getRandomQuestions(this.totalCount)
+                }
+              })
+            })
+        }
+
+        // 用时
+        StatItem({
+          icon: $r('app.media.ic_timer'),
+          name: '用时',
+          fontColor: Color.Black
+        }) {
+          Row() {
+            TextTimer({ controller: this.timerController })
+              .onTimer((_utc, elapsedTime) => {
+                this.timeUsed = elapsedTime
+              })
+          }
+          .width(100)
+          .justifyContent(FlexAlign.Center)
+        }
       }.statBgStyle()
 
       // 题目
@@ -67,9 +132,13 @@ struct PracticePage {
                 })
               }
 
-              // todo:判断正误
+              // 判断正误
               this.selectedOption = option
-              // todo:更新统计信息
+              // 更新统计信息
+              this.answeredCount++
+              if (option === this.questions[this.currentIndex].answer) {
+                this.rightCount++
+              }
 
               // 切换题目
               this.answerStatus = AnswerStatus.Answered
@@ -116,6 +185,36 @@ struct PracticePage {
       }
     }
     .practiceBgStyle()
+  }
+}
+
+
+@Builder
+function builderFunction(): void {
+}
+
+
+@Component
+struct StatItem {
+  icon: Resource = $r('app.media.ic_accuracy');
+  name: string = '';
+  // 定义传入的UI组件
+  @BuilderParam statComp: () => void = builderFunction
+  fontColor: Color = Color.Black;
+
+  build() {
+    Row({ space: 10 }) {
+      Image(this.icon)
+        .height(14)
+        .width(14)
+      Text(this.name)
+        .fontWeight(FontWeight.Medium)
+        .fontSize(14)
+        .fontColor(this.fontColor)
+      Blank()
+      this.statComp()
+    }.width('100%')
+    .height(30)
   }
 }
 
