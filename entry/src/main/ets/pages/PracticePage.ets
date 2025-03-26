@@ -3,6 +3,7 @@ import { PracticeStatus } from '../enums/PracticeStatus'
 import { getRandomQuestions, Question } from '../model/Question'
 import { promptAction } from '@kit.ArkUI'
 import { OptionStatus } from '../enums/OptionStatus'
+import { convertMillisecondsToTime } from '../utils/DateUtil'
 
 @Entry
 @Component
@@ -17,6 +18,28 @@ struct PracticePage {
   @State rightCount: number = 0 // 表示正确个数
   timerController: TextTimerController = new TextTimerController(); //controller声明
   timeUsed: number = 0 // 记录答题用时
+  dialogController: CustomDialogController = new CustomDialogController({
+    // 控制弹框
+    builder: ResultDialog({
+      answeredCount: this.answeredCount,
+      rightCount: this.rightCount,
+      timeUsed: this.timeUsed,
+      resetPractice: () => { // 回调函数---重置统计信息
+        this.questions = getRandomQuestions(this.totalCount) // 重置题目
+        this.currentIndex = 0 // 重置索引
+        this.answeredCount = 0
+        this.rightCount = 0
+        this.timeUsed = 0
+        this.timerController.reset() // 重置计时器
+        this.answerStatus = AnswerStatus.Answering
+      },
+      startPractice: () => { // 回调函数---开始测试
+        this.startPractice()
+      }
+    }),
+    customStyle: true, // 默认情况下所有弹窗都使⽤默认的样式，如需使⽤⾃定义样式，需要为CustomDialogController配置 customStyle:true 参数。
+    autoCancel: false // 禁止点击遮罩关闭弹框
+  })
 
   // 写函数的位置
   // 开始测试
@@ -38,7 +61,8 @@ struct PracticePage {
     this.practiceStatus = PracticeStatus.Stopped
     // 停止计时器
     this.timerController.pause()
-    // todo:弹窗
+    // 弹窗
+    this.dialogController.open()
   }
 
   build() {
@@ -185,6 +209,102 @@ struct PracticePage {
       }
     }
     .practiceBgStyle()
+  }
+}
+
+// 弹框组件
+@CustomDialog
+struct ResultDialog {
+  answeredCount: number = 0; // 已作答个数
+  rightCount: number = 0; // 答对个数
+  timeUsed: number = 0 // 用时
+  resetPractice: () => void = () => { // 重置统计信息
+  }
+  startPractice: () => void = () => { // 开始测试
+  }
+  controller: CustomDialogController = new CustomDialogController({
+    builder: ResultDialog()
+  })
+
+  build() {
+    Column({ space: 10 }) {
+      Image($r('app.media.ic_close'))
+        .width(25)
+        .height(25)
+        .alignSelf(ItemAlign.End)
+        .onClick(() => {
+          this.controller.close() // 关闭弹框
+          this.resetPractice() // 重置统计信息
+        })
+
+      Column({ space: 10 }) {
+        Image($r('app.media.img_post'))
+          .width('100%')
+          .borderRadius(10)
+
+        // 用时
+        StatItem({
+          icon: $r('app.media.ic_timer'),
+          name: '用时',
+          fontColor: Color.Black
+        }) {
+          Text(convertMillisecondsToTime(this.timeUsed))
+        }
+
+        // 准确率
+        StatItem({
+          icon: $r('app.media.ic_accuracy'),
+          name: '准确率',
+          fontColor: Color.Black
+        }) {
+          Text((this.answeredCount === 0 ? 0 : this.rightCount / this.answeredCount * 100).toFixed() + '%')
+        }
+
+
+        // 个数
+        StatItem({
+          icon: $r('app.media.ic_count'),
+          name: '个数',
+          fontColor: Color.Black
+        }) {
+          Text(this.answeredCount.toString())
+        }
+
+        Divider()
+
+        Row({ space: 30 }) {
+          Button('再来一局')
+            .controlButtonStyle({
+              bg: Color.Transparent,
+              border: Color.Black,
+              font: Color.Black
+            })
+            .onClick(() => {
+              this.controller.close() // 关闭弹框
+              this.resetPractice() // 重置统计信息
+              this.startPractice() // 开始测试
+            })
+          Button('登录打卡')
+            .controlButtonStyle({
+              bg: Color.Black,
+              border: Color.Black,
+              font: Color.White
+            })
+            .onClick(() => {
+              this.controller.close() // 关闭弹框
+              this.resetPractice() // 重置统计信息
+              // todo:登录并打卡
+            })
+        }
+      }
+      .backgroundColor(Color.White)
+      .width('100%')
+      .padding(20)
+      .borderRadius(10)
+
+    }
+    .backgroundColor(Color.Transparent)
+    .width('80%')
   }
 }
 
