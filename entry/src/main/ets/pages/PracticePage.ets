@@ -5,9 +5,8 @@ import { promptAction } from '@kit.ArkUI'
 import { OptionStatus } from '../enums/OptionStatus'
 import { convertMillisecondsToTime } from '../utils/DateUtil'
 
-@Entry
 @Component
-struct PracticePage {
+export struct PracticePage {
   @State practiceStatus: PracticeStatus = PracticeStatus.Stopped // 练习状态
   @State totalCount: number = 10 // 题目总数
   @State questions: Question[] = getRandomQuestions(this.totalCount) // 题目数组
