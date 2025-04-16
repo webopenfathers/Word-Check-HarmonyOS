@@ -47,6 +47,12 @@
           }
         ],
       }
+    ],
+    "requestPermissions": [
+      {
+        // 配置网络访问权限
+        "name": "ohos.permission.INTERNET"
+      }
     ]
   }
 }

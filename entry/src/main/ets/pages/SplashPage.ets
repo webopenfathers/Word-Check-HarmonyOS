@@ -3,6 +3,9 @@
 
 import { router } from '@kit.ArkUI'
 
+// 初始化持久存储
+PersistentStorage.persistProp('token', '')
+
 // 启动页面
 @Entry
 @Component
