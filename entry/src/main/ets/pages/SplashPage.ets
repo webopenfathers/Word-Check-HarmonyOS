@@ -5,6 +5,7 @@ import { router } from '@kit.ArkUI'
 
 // 初始化持久存储
 PersistentStorage.persistProp('token', '')
+AppStorage.setOrCreate('currentTabIndex', 0)
 
 // 启动页面
 @Entry

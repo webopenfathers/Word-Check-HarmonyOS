@@ -1,6 +1,14 @@
 import router from '@ohos.router'
 import { AxiosResponse } from '@ohos/axios'
-import { login, sendCode } from '../http/Api'
+import { createPost, login, sendCode } from '../http/Api'
+import { promptAction } from '@kit.ArkUI'
+
+
+interface RouterParams {
+  rightCount: number,
+  answeredCount: number,
+  timeUsed: number
+}
 
 @Entry
 @Component
@@ -9,6 +17,7 @@ struct LoginPage {
   @State code: string = ''
   // 读取数据：使用注解的方式拿数据
   @StorageLink('token') token: string = ''
+  @StorageLink('currentTabIndex') currentTabIndex: number = 0
 
   build() {
     Column() {
@@ -66,6 +75,19 @@ struct LoginPage {
           .onClick(async () => {
             let response: AxiosResponse = await login(this.phone, this.code)
             this.token = response.data.data
+            if (this.currentTabIndex == 0) {
+              // todo:发送打卡请求
+              let params = router.getParams() as RouterParams
+              await createPost({
+                rightCount: params.rightCount,
+                answeredCount: params.answeredCount,
+                timeUsed: params.timeUsed
+              })
+              promptAction.showToast({ message: '打卡成功' })
+              // todo:跳转到打卡圈
+              this.currentTabIndex = 1
+            }
+            router.back()
           })
 
         Row() {
