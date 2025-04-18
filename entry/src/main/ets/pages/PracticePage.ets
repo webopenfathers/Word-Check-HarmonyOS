@@ -336,7 +336,7 @@ function builderFunction(): void {
 
 
 @Component
-struct StatItem {
+export struct StatItem {
   icon: Resource = $r('app.media.ic_accuracy');
   name: string = '';
   // 定义传入的UI组件
