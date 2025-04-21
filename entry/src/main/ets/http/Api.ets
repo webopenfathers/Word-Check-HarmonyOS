@@ -26,3 +26,19 @@ export function login(phone: string, code: string) {
 export function createPost(post: CreatePostParams) {
   return instance.post('/word/post/create', post)
 }
+
+
+//获取全部打卡列表
+export function getAllPost(page: number, size: number) {
+  return instance.get('/word/post/getAll', { params: { page: page, size: size } })
+}
+
+//点赞
+export function like(postId: number) {
+  return instance.get('/word/like/create', { params: { postId: postId } })
+}
+
+//取消点赞
+export function cancelLike(postId: number) {
+  return instance.get('/word/like/cancel', { params: { postId: postId } })
+}

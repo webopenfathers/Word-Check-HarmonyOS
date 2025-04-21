@@ -1,23 +1,49 @@
 import { PostInfo, PostType } from "../model/PostInfo"
-import { router } from "@kit.ArkUI"
+import { promptAction, router } from "@kit.ArkUI"
 import { StatItem } from "./PracticePage"
 import { convertMillisecondsToTime } from "../utils/DateUtil"
+import { getAllPost } from "../http/Api"
+import { AxiosResponse } from "@ohos/axios"
+
 
 @Component
 export struct CirclePage {
-  @State postInfoList: PostInfo[] = [new PostInfo({
-    id: 1,
-    postText: "既然选择远方，当不负青春，砥砺前行",
-    rightCount: 3,
-    answeredCount: 4,
-    timeUsed: 5747,
-    createTime: "2024-03-19 18:54:33",
-    likeCount: 1,
-    nickname: "138****8888",
-    avatarUrl: "https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg",
-    isLike: false
-  })]
-  @StorageProp('token') token: string = ''
+  @State postInfoList: PostInfo[] = []
+  @StorageProp('token') @Watch('onTokenChange') token: string = ''
+  // 避免 List 组件首次加载触发 onReachEnd 事件
+  initLoad: boolean = false
+  total: number = 0
+  page: number = 1
+
+  // 加载数据的逻辑
+  async getPostInfoPage() {
+    let response: AxiosResponse = await getAllPost(this.page, 10)
+    response.data.data.records.forEach((post: PostType) => this.postInfoList.push(new PostInfo(post)))
+    this.total = response.data.data.total
+    this.page++
+    this.initLoad = true
+  }
+
+  // 如果已经登录--加载第一页数据
+  aboutToAppear() {
+    if (this.token) {
+      this.getPostInfoPage()
+    }
+  }
+
+  // 监听token变化
+  // 如果启动应用时不是登录状态
+  // 等到用户登录成功之后加载第一页数据(token从无到有--登录成功加载第一页数据)
+  onTokenChange() {
+    if (this.token) {
+      this.getPostInfoPage()
+    } else {
+      // token从有到无清除缓存
+      this.postInfoList = []
+      this.total = 0
+      this.page = 1
+    }
+  }
 
   build() {
     Column() {
@@ -76,6 +102,15 @@ export struct CirclePage {
       }.width('100%')
       .height('100%')
       .alignListItem(ListItemAlign.Center)
+      .onReachEnd(() => {
+        if (this.initLoad) {
+          if (this.postInfoList.length < this.total) {
+            this.getPostInfoPage()
+          } else {
+            promptAction.showToast({ message: '没有更多数据了' })
+          }
+        }
+      })
 
       Column({ space: 20 }) {
         Button({ type: ButtonType.Circle }) {
