@@ -1,4 +1,5 @@
 import { CirclePage } from './CirclePage'
+import { MinePage } from './MinePage'
 import { PracticePage } from './PracticePage'
 
 @Entry
@@ -18,7 +19,7 @@ struct Index {
 
 
       TabContent() {
-        Text('我的')
+        MinePage()
       }.tabBar(this.barBuilder(2, $r('app.media.ic_mine'), $r('app.media.ic_mine_selected'), '我的'))
     }
     .barPosition(BarPosition.End)
