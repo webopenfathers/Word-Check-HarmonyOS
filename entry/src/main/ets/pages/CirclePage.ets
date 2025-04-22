@@ -4,6 +4,7 @@ import { StatItem } from "./PracticePage"
 import { convertMillisecondsToTime } from "../utils/DateUtil"
 import { getAllPost } from "../http/Api"
 import { AxiosResponse } from "@ohos/axios"
+import { emitter } from "@kit.BasicServicesKit"
 
 
 @Component
@@ -14,6 +15,7 @@ export struct CirclePage {
   initLoad: boolean = false
   total: number = 0
   page: number = 1
+  @State isLoading: boolean = false
 
   // 加载数据的逻辑
   async getPostInfoPage() {
@@ -24,11 +26,25 @@ export struct CirclePage {
     this.initLoad = true
   }
 
+  // 刷新页面的逻辑
+  async refresh() {
+    this.isLoading = true
+    this.postInfoList = []
+    this.page = 1
+    this.total = 0
+    await this.getPostInfoPage()
+    this.isLoading = false
+  }
+
   // 如果已经登录--加载第一页数据
   aboutToAppear() {
     if (this.token) {
       this.getPostInfoPage()
     }
+
+    emitter.on({ eventId: 1 }, () => {
+      this.refresh()
+    })
   }
 
   // 监听token变化
@@ -56,14 +72,34 @@ export struct CirclePage {
         .margin({ left: 20, right: 20, top: 10 })
 
       if (this.token) {
-        //打卡列表
-        this.listBuilder()
+        if (this.isLoading) {
+          this.loadingBuilder()
+        } else {
+          //打卡列表
+          this.listBuilder()
+        }
       } else {
         //未登录
         this.unLoginBuilder()
       }
     }.height('100%')
     .width('100%')
+  }
+
+  // loading组件
+  @Builder
+  loadingBuilder() {
+    Column({ space: 15 }) {
+      Image($r('app.media.ic_loading'))
+        .width(30)
+        .height(30)
+      Text('加载中...')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#7e8892')
+    }.width('100%')
+    .layoutWeight(1)
+    .justifyContent(FlexAlign.Center)
   }
 
   @Builder

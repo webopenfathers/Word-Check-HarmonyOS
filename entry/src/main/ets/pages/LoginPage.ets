@@ -2,6 +2,7 @@ import router from '@ohos.router'
 import { AxiosResponse } from '@ohos/axios'
 import { createPost, login, sendCode } from '../http/Api'
 import { promptAction } from '@kit.ArkUI'
+import { emitter } from '@kit.BasicServicesKit'
 
 
 interface RouterParams {
@@ -84,6 +85,8 @@ struct LoginPage {
                 timeUsed: params.timeUsed
               })
               promptAction.showToast({ message: '打卡成功' })
+              // 通知
+              emitter.emit({ eventId: 1 })
               // todo:跳转到打卡圈
               this.currentTabIndex = 1
             }

@@ -5,6 +5,7 @@ import { promptAction, router } from '@kit.ArkUI'
 import { OptionStatus } from '../enums/OptionStatus'
 import { convertMillisecondsToTime } from '../utils/DateUtil'
 import { createPost } from '../http/Api'
+import { emitter } from '@kit.BasicServicesKit'
 
 @Component
 export struct PracticePage {
@@ -303,6 +304,8 @@ struct ResultDialog {
                   timeUsed: this.timeUsed
                 })
                 promptAction.showToast({ message: '打卡成功' })
+                // 通知
+                emitter.emit({ eventId: 1 })
                 // 跳转到打卡圈
                 this.currentTabIndex = 1
               } else {
