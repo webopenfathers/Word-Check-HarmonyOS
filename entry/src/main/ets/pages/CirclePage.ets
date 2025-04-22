@@ -2,7 +2,7 @@ import { PostInfo, PostType } from "../model/PostInfo"
 import { promptAction, router } from "@kit.ArkUI"
 import { StatItem } from "./PracticePage"
 import { convertMillisecondsToTime } from "../utils/DateUtil"
-import { getAllPost } from "../http/Api"
+import { cancelLike, getAllPost, like } from "../http/Api"
 import { AxiosResponse } from "@ohos/axios"
 import { emitter } from "@kit.BasicServicesKit"
 
@@ -16,6 +16,7 @@ export struct CirclePage {
   total: number = 0
   page: number = 1
   @State isLoading: boolean = false
+  scroller: Scroller = new Scroller()
 
   // 加载数据的逻辑
   async getPostInfoPage() {
@@ -129,7 +130,7 @@ export struct CirclePage {
   @Builder
   listBuilder() {
     Stack() {
-      List() {
+      List({ scroller: this.scroller }) {
         ForEach(this.postInfoList, (post: PostType) => {
           ListItem() {
             PostItem({ post: post })
@@ -159,7 +160,8 @@ export struct CirclePage {
         .backgroundColor(Color.Black)
         .opacity(0.5)
         .onClick(() => {
-          //todo:返回顶部
+          //返回顶部
+          this.scroller.scrollToIndex(0)
         })
 
         Button({ type: ButtonType.Circle }) {
@@ -172,7 +174,8 @@ export struct CirclePage {
         .backgroundColor(Color.Black)
         .opacity(0.5)
         .onClick(() => {
-          //todo:刷新
+          //刷新
+          this.refresh()
         })
       }
       .offset({ x: -20, y: -50 })
@@ -254,7 +257,18 @@ struct PostItem {
             .width(26)
             .height(26)
             .onClick(() => {
-              //todo：点赞/取消点赞
+              // 点赞/取消点赞
+              if (this.post.isLike) {
+                // 取消点赞
+                this.post.isLike = false
+                this.post.likeCount--
+                cancelLike(this.post.id)
+              } else {
+                // 点赞
+                this.post.isLike = true
+                this.post.likeCount++
+                like(this.post.id)
+              }
             })
         }.width(50)
       }.width('100%')
